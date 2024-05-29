@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>猫</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        .text-box {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            display: flex;
+            transform: translate(-50%, -50%);
+            font-size: 10rem;
+            color: #2a2a2a;
+            font-weight: bold;
+            z-index: -1;
+            animation: fadeIn 2s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.5);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+
+        @media screen and (max-width: 768px) {
+            .text-box {
+                font-size: 5rem;
+                width: 100%;
+                left: 55%;
+            }
+        }
+
+        .controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 1;
+            color: rgb(137, 137, 137);
+        }
+
+        .controls label {
+            display: block;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="text-box">
+        <h1>可爱的猫</h1>
+    </div>
+
+    <div class="controls">
+        <label>
+            旋转速度: <input type="range" id="rotationSpeed" min="0" max="0.05" step="0.001" value="0.005">
+        </label>
+        <label>
+            变形速度: <input type="range" id="scaleSpeed" min="0" max="0.1" step="0.001" value="0.00">
+        </label>
+        <label>
+            旋转轴:
+            <input type="radio" name="axis" value="x"> x
+            <input type="radio" name="axis" value="y" checked> y
+            <input type="radio" name="axis" value="z"> z
+        </label>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/three@0.141.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.141.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script>
+        // 创建场景
+        const scene = new THREE.Scene();
+
+        // 创建相机
+        const camera = new THREE.PerspectiveCamera(20, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 5;
+
+        // 创建渲染器
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        renderer.setClearColor(0x000000, 0);
+
+        // 添加光源
+        const light = new THREE.DirectionalLight(0x0fffff, 0.3);
+        light.position.set(1, 0, 1).normalize();
+        scene.add(light);
+
+        const light2 = new THREE.DirectionalLight(0xff0fff, 0.3);
+        light2.position.set(-1, 0, -1).normalize();
+        scene.add(light2);
+
+        // 添加环境光
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+        scene.add(ambientLight);
+
+        // 加载模型
+        const loader = new THREE.GLTFLoader();
+        loader.load(
+            './module.glb', // 模型文件的路径
+            function (gltf) {
+                gltf.scene.position.set(1, 0, 0);
+                //旋转模型
+                gltf.scene.rotation.y = Math.PI;
+
+                // 模型加载完成后的回调函数
+                scene.add(gltf.scene);
+            },
+            undefined,
+            function (error) {
+                console.error(error);
+            }
+        );
+
+        // 动画循环
+        function animate() {
+            // 获取旋转速度和变形速度
+            const rotationSpeed = parseFloat(document.getElementById('rotationSpeed').value);
+            const scaleSpeed = parseFloat(document.getElementById('scaleSpeed').value);
+            const axis = document.querySelector('input[name="axis"]:checked').value;
+
+            // 旋转轴
+            if (axis === 'x') {
+                scene.rotation.x -= rotationSpeed;
+            } else if (axis === 'y') {
+                scene.rotation.y -= rotationSpeed;
+            } else {
+                scene.rotation.z -= rotationSpeed;
+            }
+
+
+            // 使动画无限循环放大缩小
+            scene.scale.x = Math.sin(Date.now() * scaleSpeed) * 0.3 + 1;
+            scene.scale.y = Math.sin(Date.now() * scaleSpeed) * 0.1 + 1;
+
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        // 调整窗口大小
+        window.addEventListener('resize', () => {
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+        });
+    </script>
+</body>
+
+</html>
